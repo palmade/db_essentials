@@ -10,8 +10,10 @@ module Palmade
     def self.logger=(l); @logger = l; end
 
     autoload :FindExtensions, File.join(DB_ESSENTIALS_LIB_DIR, 'db_essentials/find_extensions')
+
     autoload :Helpers, File.join(DB_ESSENTIALS_LIB_DIR, 'db_essentials/helpers')
     autoload :Acts, File.join(DB_ESSENTIALS_LIB_DIR, 'db_essentials/acts')
+    autoload :Exts, File.join(DB_ESSENTIALS_LIB_DIR, 'db_essentials/exts')
 
     module Extend; end
 
