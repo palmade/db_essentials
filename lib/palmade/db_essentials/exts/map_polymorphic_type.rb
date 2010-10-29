@@ -103,8 +103,8 @@ module Palmade::DbEssentials
           ptm[association_id]
         end
 
-        def belongs_to_with_map_polymorphic_type(association_id, options = { })
-          ret = belongs_to_without_map_polymorphic_type(association_id, options)
+        def belongs_to_with_map_polymorphic_type(association_id, options = { }, &block)
+          ret = belongs_to_without_map_polymorphic_type(association_id, options, &block)
 
           r = reflections[association_id]
           if r.options[:polymorphic]
@@ -115,8 +115,8 @@ module Palmade::DbEssentials
           ret
         end
 
-        def has_many_with_map_polymorphic_type(association_id, options = { })
-          ret = has_many_without_map_polymorphic_type(association_id, options)
+        def has_many_with_map_polymorphic_type(association_id, options = { }, &block)
+          ret = has_many_without_map_polymorphic_type(association_id, options, &block)
 
           r = reflections[association_id]
           if r.options[:as]
