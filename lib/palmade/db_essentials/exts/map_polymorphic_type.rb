@@ -90,7 +90,7 @@ module Palmade::DbEssentials
 
           case r.macro
           when :has_many
-            ptm[association_id] ||= [ ]
+            ptm[association_id] ||= [ self.base_class.name.to_s ]
             ptm[association_id].concat(args)
             ptm[association_id].uniq!
           when :belongs_to

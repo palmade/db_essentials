@@ -27,11 +27,13 @@ describe Palmade::DbEssentials::Exts::MapPolymorphicType do
 
     it "should have a mapping for comments association" do
       mtp = Person.read_inheritable_attribute(:polymorphic_type_map)
+
       mtp.should be_an_instance_of Hash
       mtp.should_not be_empty
       mtp[:comments].should_not == nil
       mtp[:comments].should_not be_empty
-      mtp[:comments].first == "Mark"
+      mtp[:comments][0].should == "Person"
+      mtp[:comments][1].should == "Mark"
     end
 
     it "should have a mapping for authorable association" do
