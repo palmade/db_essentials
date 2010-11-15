@@ -3,6 +3,7 @@
 
 module Palmade::DbEssentials
   class FindExtensions
+
     def self.build_modifier_with_option(klass, opt_k, opt_v)
       if opt_k.to_s =~ /^with\_(.+)/
         ks, k_type, comp_modifier = extend_parse_key(klass, $~[1].dup)
@@ -104,8 +105,10 @@ module Palmade::DbEssentials
               opt_v.each { |v| types.add(v.class.name) }
 
               modf[:modifier] = types.collect { |tp_k|
-                "(#{table_name}.#{reflect.options[:foreign_type]} = :with_#{modf[:polymorphic].to_s}_#{tp_k}_type" +
-                " AND #{table_name}.#{reflect.primary_key_name} IN (:with_#{modf[:polymorphic].to_s}_#{tp_k}_id))"
+                class_key = safe_class_name(tp_k)
+
+                "(#{table_name}.#{reflect.options[:foreign_type]} IN (:with_#{modf[:polymorphic].to_s}_#{class_key}_type)" +
+                " AND #{table_name}.#{reflect.primary_key_name} IN (:with_#{modf[:polymorphic].to_s}_#{class_key}_id))"
               }.join(" OR ")
 
               # must match *all* these types
@@ -127,7 +130,7 @@ module Palmade::DbEssentials
                 end
               else
                 modf[:modifier] = "#{table_name}.#{reflect.primary_key_name} = :with_#{modf[:polymorphic].to_s}_id" +
-                  " AND #{table_name}.#{reflect.options[:foreign_type]} = :with_#{modf[:polymorphic].to_s}_type"
+                  " AND #{table_name}.#{reflect.options[:foreign_type]} IN (:with_#{modf[:polymorphic].to_s}_type)"
               end
             end
           else
@@ -648,8 +651,17 @@ module Palmade::DbEssentials
       case opt_v
       when ::ActiveRecord::Base
         if modf[:polymorphic]
+          class_name = opt_v.class.name
+          type_map = @ar.read_inheritable_attribute(:polymorphic_type_map)
+
+          if type_map.nil? or type_map[modf[:polymorphic]].nil?
+            attr_classes = [ class_name ]
+          else
+            attr_classes = find_equiv_classes(class_name, type_map[modf[:polymorphic]])
+          end
+
           { "with_#{modf[:polymorphic].to_s}_id".to_sym => opt_v.id,
-            "with_#{modf[:polymorphic].to_s}_type".to_sym => opt_v.class.name }
+            "with_#{modf[:polymorphic].to_s}_type".to_sym => attr_classes }
         else
           { opt_k => opt_v.id }
         end
@@ -678,8 +690,17 @@ module Palmade::DbEssentials
 
           modi = { }
           for tp_k, tp_v in types
-            modi["with_#{modf[:polymorphic].to_s}_#{tp_k}_id".to_sym] = tp_v
-            modi["with_#{modf[:polymorphic].to_s}_#{tp_k}_type".to_sym] = tp_k
+            class_key = self.class.safe_class_name(tp_k)
+            type_map = @ar.read_inheritable_attribute(:polymorphic_type_map)
+
+            if type_map.nil? or type_map[modf[:polymorphic]].nil?
+              attr_classes = [ tp_k ]
+            else
+              attr_classes = find_equiv_classes(tp_k, type_map[modf[:polymorphic]])
+            end
+
+            modi["with_#{modf[:polymorphic].to_s}_#{class_key}_id".to_sym] = tp_v
+            modi["with_#{modf[:polymorphic].to_s}_#{class_key}_type".to_sym] = attr_classes
           end
 
           modi
@@ -701,5 +722,20 @@ module Palmade::DbEssentials
         end
       end
     end
+
+    def find_equiv_classes(class_name, type_map)
+      result = [ class_name ]
+
+      type_map.each do |key, value|
+        result.push(key) if class_name.to_s == value.to_s
+      end
+
+      result
+    end
+
+    def self.safe_class_name(class_name)
+      class_name.to_s.gsub('::', '_')
+    end
+
   end
 end
