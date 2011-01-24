@@ -44,7 +44,7 @@ module Palmade::DbEssentials
 
         def sortable_delete_keys(options)
           if sortable?
-            returning(options.dup) do |sanitized_options|
+            options.dup.tap do |sanitized_options|
               sanitized_options.delete(:sort_by)
             end
           else
