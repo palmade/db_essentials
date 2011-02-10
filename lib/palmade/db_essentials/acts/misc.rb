@@ -63,7 +63,10 @@ module Palmade::DbEssentials
 
         # the following methods are only applicable to mySQL
         def db_mysql?
-          connection.is_a?(::ActiveRecord::ConnectionAdapters::MysqlAdapter)
+          (defined?(ActiveRecord::ConnectionAdapters::MysqlAdapter) and
+            connection.is_a?(::ActiveRecord::ConnectionAdapters::MysqlAdapter)) or
+          (defined?(ActiveRecord::ConnectionAdapters::Mysql2Adapter) and
+            connection.is_a?(::ActiveRecord::ConnectionAdapters::Mysql2Adapter))
         end
       end
 
